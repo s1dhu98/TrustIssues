@@ -1,0 +1,12 @@
+{
+  "private": true,
+  "workspaces": [
+    "trustissues"
+  ],
+  "scripts": {
+    "start": "cd trustissues && npx expo start",
+    "android": "cd trustissues && npx expo start --android",
+    "ios": "cd trustissues && npx expo start --ios",
+    "web": "cd trustissues && npx expo start --web"
+  }
+}

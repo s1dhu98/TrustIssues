@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "TrustIssues",
+    "slug": "trustissues",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "backgroundColor": "#0F0F23",
+      "resizeMode": "contain"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "TrustIssues needs camera access to scan barcodes on food products."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0F0F23"
+      },
+      "permissions": ["CAMERA"]
+    },
+    "plugins": []
+  }
+}
