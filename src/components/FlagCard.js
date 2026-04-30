@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 
-export default function FlagCard({ type, items, title }) {
+export default function FlagCard({ type, items, title, onPressItem }) {
     const { theme } = useTheme();
     const colors = { green: theme.green, red: theme.red, white: theme.white };
     const emojis = { green: '🟢', red: '🚩', white: '⚪' };
@@ -16,10 +16,10 @@ export default function FlagCard({ type, items, title }) {
                 <Text style={[styles.empty, { color: theme.textSecondary }]}>None detected</Text>
             ) : (
                 items.map((item, idx) => (
-                    <View key={idx} style={styles.item}>
+                    <TouchableOpacity key={idx} style={styles.item} onPress={() => onPressItem && onPressItem(item)}>
                         <Text style={[styles.itemName, { color: colors[type] }]}>• {item.name.toUpperCase()}</Text>
                         <Text style={[styles.itemReason, { color: theme.textSecondary }]}>{item.reason}</Text>
-                    </View>
+                    </TouchableOpacity>
                 ))
             )}
         </View>
