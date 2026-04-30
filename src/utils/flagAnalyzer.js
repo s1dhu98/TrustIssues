@@ -100,6 +100,25 @@ const WHITE_FLAG_INGREDIENTS = {
 export function analyzeIngredients(ingredientsText) {
     if (!ingredientsText) return { greens: [], reds: [], whites: [], score: 50 };
 
+    const extractIngredientsSection = (text) => {
+        const lowerText = text.toLowerCase();
+        const startIndexMatch = lowerText.match(/ingredients?\s*[\:\-\.]?\s*/);
+        
+        if (startIndexMatch && startIndexMatch.index > -1) {
+            let section = text.substring(startIndexMatch.index + startIndexMatch[0].length);
+            const endKeywords = [/manufactured by/i, /distributed by/i, /marketed by/i, /produced by/i, /allergy advice/i, /allergen/i, /net weight/i, /net wt/i, /store in/i, /best before/i, /expiry/i, /customer care/i, /contains:/i];
+            let minEndIndex = section.length;
+            for (let keyword of endKeywords) {
+                const match = section.match(keyword);
+                if (match && match.index > 5) {
+                    if (match.index < minEndIndex) minEndIndex = match.index;
+                }
+            }
+            return section.substring(0, minEndIndex).trim();
+        }
+        return text;
+    };
+
     const cleanIngredient = (ing) => {
         return ing.toLowerCase()
             .replace(/^(organic|contains|made with|100%|pure|natural|artificial|processed with)\s+/g, '')
@@ -107,8 +126,23 @@ export function analyzeIngredients(ingredientsText) {
             .trim();
     };
 
-    const flatText = ingredientsText.replace(/[\(\)\[\]\{\}]/g, ',');
-    const parsedIngredients = flatText.split(',').map(i => cleanIngredient(i)).filter(i => i.length > 1);
+    const NON_INGREDIENT_WORDS = [
+        'manufactured', 'distributed', 'marketed', 'produced', 'packed', 'pvt', 'ltd', 'limited', 'private',
+        'road', 'street', 'estate', 'nagar', 'delhi', 'mumbai', 'india', 'usa', 'uk', 'china', 'gmbh', 'inc', 'llc',
+        'allergy', 'allergen', 'warning', 'store in', 'cool dry', 'best before', 'expiry', 'net weight', 'net wt',
+        'customer care', 'toll free', 'website', 'email', 'fssai', 'lic', 'no.', 'www.', '.com', '.in', '@'
+    ];
+
+    const isIngredient = (ing) => {
+        if (ing.length < 2) return false;
+        if (/^[\d\s\.\-\%]+$/.test(ing)) return false; 
+        if (NON_INGREDIENT_WORDS.some(w => ing.includes(w))) return false;
+        return true;
+    };
+
+    const focusedText = extractIngredientsSection(ingredientsText);
+    const flatText = focusedText.replace(/[\(\)\[\]\{\}]/g, ',');
+    const parsedIngredients = flatText.split(',').map(i => cleanIngredient(i)).filter(isIngredient);
     const uniqueIngredients = [...new Set(parsedIngredients)];
 
     const greens = [], reds = [], whites = [];

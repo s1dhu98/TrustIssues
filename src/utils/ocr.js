@@ -22,9 +22,9 @@ export async function performOCR(imageUri) {
                 'Accept': 'application/json',
             }
         });
-        
+
         const result = await response.json();
-        
+
         if (result.IsErroredOnProcessing || !result.ParsedResults) {
             console.error('OCR Error:', result.ErrorMessage);
             return null;
