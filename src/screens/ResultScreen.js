@@ -7,11 +7,18 @@ import { useTheme } from '../context/ThemeContext';
 import { useLang } from '../context/LanguageContext';
 import FlagCard from '../components/FlagCard';
 import GradientButton from '../components/GradientButton';
+import { analyzeIngredients } from '../utils/flagAnalyzer';
 
 export default function ResultScreen({ route, navigation }) {
     const { product } = route.params;
     const { theme } = useTheme();
     const { t } = useLang();
+    
+    // Dynamically analyze to ensure flags are always present
+    const analysis = analyzeIngredients(product.ingredients);
+    const reds = product.reds || analysis.reds || [];
+    const greens = product.greens || analysis.greens || [];
+    const whites = product.whites || analysis.whites || [];
 
     const getScoreColor = (s) => {
         if (s >= 70) return theme.green;
@@ -51,9 +58,9 @@ export default function ResultScreen({ route, navigation }) {
                     <Text style={styles.scoreNum}>{product.score}/100</Text>
                     <Text style={styles.scoreVerdict}>{getScoreLabel(product.score)}</Text>
                 </LinearGradient>
-                <FlagCard type="red" title={t('redFlags')} items={product.reds || []} />
-                <FlagCard type="green" title={t('greenFlags')} items={product.greens || []} />
-                <FlagCard type="white" title={t('whiteFlags')} items={product.whites || []} />
+                <FlagCard type="red" title={t('redFlags')} items={reds} />
+                <FlagCard type="green" title={t('greenFlags')} items={greens} />
+                <FlagCard type="white" title={t('whiteFlags')} items={whites} />
                 {product.ingredients ? (
                     <View style={[styles.ingCard, { backgroundColor: theme.card }]}>
                         <Text style={[styles.ingTitle, { color: theme.text }]}>📝 {t('ingredients')}</Text>

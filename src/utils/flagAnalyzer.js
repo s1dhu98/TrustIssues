@@ -1,10 +1,9 @@
 const RED_FLAG_INGREDIENTS = {
     'aspartame': 'Artificial sweetener linked to headaches and possible health risks',
     'saccharin': 'Artificial sweetener, possible carcinogen concerns',
-    'acesulfame k': 'Artificial sweetener, long-term effects unclear',
-    'acesulfame potassium': 'Artificial sweetener, long-term effects unclear',
+    'acesulfame': 'Artificial sweetener, long-term effects unclear',
     'partially hydrogenated': 'Trans fat - increases heart disease risk',
-    'hydrogenated oil': 'Often contains trans fats - bad for heart',
+    'hydrogenated': 'Often contains trans fats - bad for heart',
     'red 40': 'Artificial color, linked to hyperactivity in children',
     'red 3': 'Artificial color, banned in cosmetics for safety',
     'yellow 5': 'Artificial color, may cause allergic reactions',
@@ -13,19 +12,24 @@ const RED_FLAG_INGREDIENTS = {
     'blue 2': 'Artificial color, behavioral concerns',
     'tartrazine': 'Artificial yellow dye, allergy risks',
     'sodium nitrite': 'Preservative in processed meats, cancer risk',
-    'sodium nitrate': 'Preservative, linked to cancer risk',
+    'nitrate': 'Preservative, linked to cancer risk',
     'bha': 'Preservative, possible carcinogen',
     'bht': 'Preservative, possible health concerns',
     'tbhq': 'Preservative, linked to vision issues',
     'potassium bromate': 'Flour treatment, banned in many countries',
     'high fructose corn syrup': 'Linked to obesity, diabetes, fatty liver',
-    'corn syrup solids': 'Highly processed sugar',
+    'corn syrup': 'Highly processed sugar',
     'monosodium glutamate': 'May cause headaches in sensitive people',
+    'msg': 'May cause headaches in sensitive people',
     'carrageenan': 'Thickener, digestive issues concerns',
     'propyl gallate': 'Preservative, endocrine concerns',
     'sodium benzoate': 'Preservative, may form benzene',
-    'palm oil': 'High saturated fat, environmental concerns',
+    'palm': 'High saturated fat, environmental concerns (palm oil/olein)',
     'shortening': 'Often contains trans fats',
+    'artificial flavor': 'Synthetic chemicals used for flavoring',
+    'sucralose': 'Artificial sweetener, can disrupt gut microbiome',
+    'high-fructose': 'Highly processed sugar linked to obesity',
+    'maltodextrin': 'Highly processed carbohydrate, spikes blood sugar'
 };
 
 const GREEN_FLAG_INGREDIENTS = {
@@ -79,11 +83,9 @@ const WHITE_FLAG_INGREDIENTS = {
     'pectin': 'Natural thickener from fruit',
     'yeast extract': 'Flavor enhancer, moderate amounts fine',
     'modified starch': 'Processed but generally safe',
-    'maltodextrin': 'Processed carb, moderate use',
     'dextrose': 'Simple sugar',
     'glucose': 'Simple sugar',
     'stevia': 'Natural sweetener, mostly safe',
-    'sucralose': 'Artificial sweetener, moderation',
 };
 
 export function analyzeIngredients(ingredientsText) {
