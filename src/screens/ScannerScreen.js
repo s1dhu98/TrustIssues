@@ -65,7 +65,7 @@ export default function ScannerScreen({ navigation }) {
         }
     };
 
-    if (!permission && Platform.OS !== 'web') {
+    if (!permission) {
         return (
             <SafeAreaView style={[styles.container, { backgroundColor: theme.bg }]}>
                 <Text style={{ color: theme.text, textAlign: 'center', marginTop: 100 }}>
@@ -75,7 +75,7 @@ export default function ScannerScreen({ navigation }) {
         );
     }
 
-    if (permission && !permission.granted && Platform.OS !== 'web') {
+    if (permission && !permission.granted) {
         return (
             <SafeAreaView style={[styles.container, { backgroundColor: theme.bg }]}>
                 <View style={styles.centered}>
@@ -89,19 +89,11 @@ export default function ScannerScreen({ navigation }) {
 
     return (
         <View style={[styles.container, { backgroundColor: theme.bg }]}>
-            {Platform.OS !== 'web' ? (
-                <CameraView 
-                    onBarcodeScanned={scanned ? undefined : handleBarCodeScanned} 
-                    barcodeScannerSettings={{ barcodeTypes: ["ean13", "ean8", "upc_a", "upc_e", "qr"] }}
-                    style={StyleSheet.absoluteFillObject} 
-                />
-            ) : (
-                <View style={[StyleSheet.absoluteFillObject, { justifyContent: 'center', alignItems: 'center' }]}>
-                    <Text style={{ color: theme.text, fontSize: 18, textAlign: 'center', padding: 20 }}>
-                        📷 Barcode scanning is not supported on web.{'\n'}Please use the manual entry option below.
-                    </Text>
-                </View>
-            )}
+            <CameraView 
+                onBarcodeScanned={scanned ? undefined : handleBarCodeScanned} 
+                barcodeScannerSettings={{ barcodeTypes: ["ean13", "ean8", "upc_a", "upc_e", "qr"] }}
+                style={StyleSheet.absoluteFillObject} 
+            />
             <SafeAreaView style={styles.overlay}>
                 <View style={styles.header}>
                     <Text style={styles.headerText}>{t('scanFood')} 📷</Text>
