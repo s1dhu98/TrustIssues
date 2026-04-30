@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, ActivityIndicator, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { requestPermissionsAsync } from 'expo-camera';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
@@ -10,40 +10,14 @@ import { fetchProduct, analyzeIngredients } from '../utils/flagAnalyzer';
 import { saveScan } from '../utils/storage';
 import GradientButton from '../components/GradientButton';
 
-// Conditionally import BarCodeScanner only on native platforms
-let BarCodeScanner = null;
-if (Platform.OS !== 'web') {
-    const { BarCodeScanner: BCS } = require('expo-camera');
-    BarCodeScanner = BCS;
-}
-
 export default function ScannerScreen({ navigation }) {
     const { theme } = useTheme();
     const { t } = useLang();
-    const [hasPermission, setHasPermission] = useState(null);
+    const [permission, requestPermission] = useCameraPermissions();
     const [scanned, setScanned] = useState(false);
     const [loading, setLoading] = useState(false);
     const [manualBarcode, setManualBarcode] = useState('');
     const [showManual, setShowManual] = useState(false);
-
-    useEffect(() => {
-        if (Platform.OS === 'web') {
-            // Skip permission request on web since barcode scanning is not supported
-            setHasPermission(true);
-            return;
-        }
-
-        (async () => {
-            try {
-                const { status } = await requestPermissionsAsync();
-                setHasPermission(status === 'granted');
-            } catch (error) {
-                console.log('Permission request failed:', error);
-                // For web, assume permission is granted if request fails
-                setHasPermission(true);
-            }
-        })();
-    }, []);
 
     useEffect(() => {
         const unsubscribe = navigation.addListener('focus', () => setScanned(false));
@@ -91,31 +65,23 @@ export default function ScannerScreen({ navigation }) {
         }
     };
 
-    if (hasPermission === null) {
+    if (!permission && Platform.OS !== 'web') {
         return (
             <SafeAreaView style={[styles.container, { backgroundColor: theme.bg }]}>
                 <Text style={{ color: theme.text, textAlign: 'center', marginTop: 100 }}>
-                    {Platform.OS === 'web' ? 'Loading scanner...' : 'Requesting camera permission...'}
+                    Requesting camera permission...
                 </Text>
             </SafeAreaView>
         );
     }
 
-    if (hasPermission === false && Platform.OS !== 'web') {
+    if (permission && !permission.granted && Platform.OS !== 'web') {
         return (
             <SafeAreaView style={[styles.container, { backgroundColor: theme.bg }]}>
                 <View style={styles.centered}>
                     <Ionicons name="camera-off" size={80} color={theme.red} />
                     <Text style={[styles.permText, { color: theme.text }]}>{t('permissionDenied')}</Text>
-                    <GradientButton title={t('grantPermission')} onPress={async () => {
-                        try {
-                            const { status } = await requestPermissionsAsync();
-                            setHasPermission(status === 'granted');
-                        } catch (error) {
-                            console.log('Permission request failed:', error);
-                            setHasPermission(true);
-                        }
-                    }} style={{ marginTop: 20 }} />
+                    <GradientButton title={t('grantPermission')} onPress={requestPermission} style={{ marginTop: 20 }} />
                 </View>
             </SafeAreaView>
         );
@@ -123,8 +89,12 @@ export default function ScannerScreen({ navigation }) {
 
     return (
         <View style={[styles.container, { backgroundColor: theme.bg }]}>
-            {Platform.OS !== 'web' && BarCodeScanner ? (
-                <BarCodeScanner onBarCodeScanned={scanned ? undefined : handleBarCodeScanned} style={StyleSheet.absoluteFillObject} />
+            {Platform.OS !== 'web' ? (
+                <CameraView 
+                    onBarcodeScanned={scanned ? undefined : handleBarCodeScanned} 
+                    barcodeScannerSettings={{ barcodeTypes: ["ean13", "ean8", "upc_a", "upc_e", "qr"] }}
+                    style={StyleSheet.absoluteFillObject} 
+                />
             ) : (
                 <View style={[StyleSheet.absoluteFillObject, { justifyContent: 'center', alignItems: 'center' }]}>
                     <Text style={{ color: theme.text, fontSize: 18, textAlign: 'center', padding: 20 }}>
