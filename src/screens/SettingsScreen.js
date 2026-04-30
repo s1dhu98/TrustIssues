@@ -1,14 +1,23 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useLang } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 import { languageList } from '../utils/translations';
 
 export default function SettingsScreen() {
     const { theme, themeName, changeTheme, themes } = useTheme();
     const { lang, changeLang, t } = useLang();
+    const { user, logout } = useAuth();
+
+    const handleLogout = () => {
+        Alert.alert('Logout', 'Are you sure you want to sign out?', [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Sign Out', style: 'destructive', onPress: logout },
+        ]);
+    };
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: theme.bg }]}>
@@ -52,6 +61,24 @@ export default function SettingsScreen() {
                         ⚠️ This app provides educational info only. Not medical advice. Consult a doctor for health decisions.
                     </Text>
                 </View>
+
+                {/* Account & Logout */}
+                <View style={[styles.section, { backgroundColor: theme.card }]}>
+                    <Text style={[styles.sectionTitle, { color: theme.accent }]}>👤 Account</Text>
+                    {user && (
+                        <View style={{ marginBottom: 12 }}>
+                            <Text style={[styles.aboutText, { color: theme.text, fontSize: 16 }]}>{user.name}</Text>
+                            <Text style={[styles.aboutSub, { color: theme.textSecondary }]}>{user.email}</Text>
+                        </View>
+                    )}
+                    <TouchableOpacity
+                        style={[styles.logoutBtn, { backgroundColor: theme.red + '20', borderColor: theme.red }]}
+                        onPress={handleLogout}
+                    >
+                        <Ionicons name="log-out-outline" size={22} color={theme.red} />
+                        <Text style={[styles.logoutText, { color: theme.red }]}>Sign Out</Text>
+                    </TouchableOpacity>
+                </View>
             </ScrollView>
         </SafeAreaView>
     );
@@ -69,4 +96,6 @@ const styles = StyleSheet.create({
     swatch: { width: 20, height: 20, borderRadius: 10, marginRight: -6 },
     aboutText: { fontSize: 22, fontWeight: '900', marginTop: 4 },
     aboutSub: { fontSize: 13, marginTop: 4, lineHeight: 18 },
+    logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 16, borderRadius: 16, borderWidth: 2, gap: 8, marginTop: 4 },
+    logoutText: { fontSize: 16, fontWeight: '800' },
 });
