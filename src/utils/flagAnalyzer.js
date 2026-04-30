@@ -12,7 +12,8 @@ const RED_FLAG_INGREDIENTS = {
     'blue 2': 'Artificial color, behavioral concerns',
     'tartrazine': 'Artificial yellow dye, allergy risks',
     'sodium nitrite': 'Preservative in processed meats, cancer risk',
-    'nitrate': 'Preservative, linked to cancer risk',
+    'sodium nitrate': 'Preservative, linked to cancer risk',
+    'potassium nitrate': 'Preservative, linked to cancer risk',
     'bha': 'Preservative, possible carcinogen',
     'bht': 'Preservative, possible health concerns',
     'tbhq': 'Preservative, linked to vision issues',
@@ -64,6 +65,12 @@ const GREEN_FLAG_INGREDIENTS = {
     'inulin': 'Prebiotic fiber for gut health',
     'vitamin d': 'Essential for bones and immunity',
     'vitamin b12': 'Essential for nerves and blood',
+    'vitamin b1': 'Essential for metabolism',
+    'vitamin b2': 'Essential for cell growth',
+    'folic acid': 'Essential B vitamin (B9)',
+    'niacin': 'Essential B vitamin (B3)',
+    'thiamine': 'Essential B vitamin (B1)',
+    'riboflavin': 'Essential B vitamin (B2)',
     'iron': 'Essential mineral',
     'calcium': 'Essential for bones',
     'omega-3': 'Heart and brain health',
@@ -86,28 +93,74 @@ const WHITE_FLAG_INGREDIENTS = {
     'dextrose': 'Simple sugar',
     'glucose': 'Simple sugar',
     'stevia': 'Natural sweetener, mostly safe',
+    'baking soda': 'Common leavening agent',
+    'baking powder': 'Common leavening agent',
 };
 
 export function analyzeIngredients(ingredientsText) {
     if (!ingredientsText) return { greens: [], reds: [], whites: [], score: 50 };
 
-    const text = ingredientsText.toLowerCase();
+    const cleanIngredient = (ing) => {
+        return ing.toLowerCase()
+            .replace(/^(organic|contains|made with|100%|pure|natural|artificial|processed with)\s+/g, '')
+            .replace(/[\*\_]/g, '')
+            .trim();
+    };
+
+    const flatText = ingredientsText.replace(/[\(\)\[\]\{\}]/g, ',');
+    const parsedIngredients = flatText.split(',').map(i => cleanIngredient(i)).filter(i => i.length > 1);
+    const uniqueIngredients = [...new Set(parsedIngredients)];
+
     const greens = [], reds = [], whites = [];
 
-    Object.entries(RED_FLAG_INGREDIENTS).forEach(([key, reason]) => {
-        if (text.includes(key)) reds.push({ name: key, reason });
-    });
-    Object.entries(GREEN_FLAG_INGREDIENTS).forEach(([key, reason]) => {
-        if (text.includes(key)) greens.push({ name: key, reason });
-    });
-    Object.entries(WHITE_FLAG_INGREDIENTS).forEach(([key, reason]) => {
-        if (text.includes(key)) whites.push({ name: key, reason });
+    uniqueIngredients.forEach(ing => {
+        let classified = false;
+
+        // 1. Check exact dictionaries
+        for (let [key, reason] of Object.entries(RED_FLAG_INGREDIENTS)) {
+            if (ing.includes(key)) {
+                reds.push({ name: ing, reason });
+                classified = true;
+                break;
+            }
+        }
+        if (classified) return;
+
+        for (let [key, reason] of Object.entries(GREEN_FLAG_INGREDIENTS)) {
+            if (ing.includes(key)) {
+                greens.push({ name: ing, reason });
+                classified = true;
+                break;
+            }
+        }
+        if (classified) return;
+
+        for (let [key, reason] of Object.entries(WHITE_FLAG_INGREDIENTS)) {
+            if (ing.includes(key)) {
+                whites.push({ name: ing, reason });
+                classified = true;
+                break;
+            }
+        }
+        if (classified) return;
+
+        // 2. If unknown, run algorithm
+        const chemicalPatterns = [/acid\b/, /oxide\b/, /sulfate\b/, /phosphate\b/, /chloride\b/, /nitrate\b/, /poly/, /glycol/, /benzoate\b/, /sorbate\b/, /\d/, /gum\b/, /color\b/, /dye\b/];
+        const naturalPatterns = [/extract\b/, /oil\b/, /juice\b/, /powder\b/, /leaf\b/, /seed\b/, /root\b/, /flour\b/, /water\b/, /milk\b/, /cocoa\b/, /bean\b/, /nut\b/, /fruit\b/, /starch\b/, /yeast\b/];
+
+        if (chemicalPatterns.some(p => p.test(ing))) {
+            reds.push({ name: ing, reason: 'Algorithmic Flag: Potential synthetic or chemical additive' });
+        } else if (naturalPatterns.some(p => p.test(ing))) {
+            greens.push({ name: ing, reason: 'Algorithmic Flag: Likely natural plant or base ingredient' });
+        } else {
+            whites.push({ name: ing, reason: 'Algorithmic Flag: Unclassified ingredient, moderate use advised' });
+        }
     });
 
     let score = 50;
-    score += greens.length * 8;
-    score -= reds.length * 12;
-    score -= whites.length * 2;
+    score += greens.length * 4;
+    score -= reds.length * 8;
+    score -= whites.length * 1;
     score = Math.max(0, Math.min(100, score));
 
     return { greens, reds, whites, score };
