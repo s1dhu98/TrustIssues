@@ -4,10 +4,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { useTheme } from '../context/ThemeContext';
 import { useLang } from '../context/LanguageContext';
 import { fetchProduct, analyzeIngredients } from '../utils/flagAnalyzer';
 import { saveScan } from '../utils/storage';
+import { performOCR } from '../utils/ocr';
 import GradientButton from '../components/GradientButton';
 
 export default function ScannerScreen({ navigation }) {
@@ -41,6 +43,19 @@ export default function ScannerScreen({ navigation }) {
                 ]);
                 return;
             }
+
+            if (!product.ingredients || product.ingredients.trim() === '') {
+                setLoading(false);
+                Alert.alert(
+                    'No Ingredients Found',
+                    'We found the product, but the ingredients list is missing from the database. Would you like to scan the ingredients label directly?',
+                    [
+                        { text: 'Cancel', style: 'cancel', onPress: () => setScanned(false) },
+                        { text: 'Scan Label', onPress: () => handleOCRScan(product) }
+                    ]
+                );
+                return;
+            }
             const analysis = analyzeIngredients(product.ingredients);
             const fullProduct = { ...product, ...analysis };
             await saveScan(fullProduct);
@@ -51,6 +66,59 @@ export default function ScannerScreen({ navigation }) {
             setLoading(false);
             setScanned(false);
             Alert.alert('Error', 'Failed to fetch product data');
+        }
+    };
+
+    const handleOCRScan = async (baseProduct = null) => {
+        setScanned(true);
+        try {
+            const { status } = await ImagePicker.requestCameraPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert('Permission needed', 'Camera permission is required to scan ingredients.');
+                setScanned(false);
+                return;
+            }
+
+            const result = await ImagePicker.launchCameraAsync({
+                allowsEditing: true,
+                quality: 0.6,
+            });
+
+            if (result.canceled) {
+                setScanned(false);
+                return;
+            }
+
+            setLoading(true);
+            const text = await performOCR(result.assets[0].uri);
+            
+            if (!text || text.trim().length < 5) {
+                setLoading(false);
+                Alert.alert('Scan Failed', 'Could not extract text from the image. Please try again with better lighting.', [
+                    { text: 'OK', onPress: () => setScanned(false) }
+                ]);
+                return;
+            }
+
+            const analysis = analyzeIngredients(text);
+            const fullProduct = {
+                barcode: baseProduct ? baseProduct.barcode : 'OCR_' + Date.now(),
+                name: baseProduct ? baseProduct.name : 'Scanned Ingredients',
+                brand: baseProduct ? baseProduct.brand : 'Unknown',
+                image: baseProduct && baseProduct.image ? baseProduct.image : result.assets[0].uri,
+                ingredients: text,
+                ...analysis
+            };
+
+            await saveScan(fullProduct);
+            setLoading(false);
+            setScanned(false);
+            navigation.navigate('Result', { product: fullProduct });
+
+        } catch (e) {
+            setLoading(false);
+            setScanned(false);
+            Alert.alert('Error', 'Something went wrong during label scanning.');
         }
     };
 
@@ -127,10 +195,16 @@ export default function ScannerScreen({ navigation }) {
                             </View>
                         </View>
                     ) : (
-                        <TouchableOpacity style={[styles.manualBtn, { backgroundColor: theme.card }]} onPress={() => setShowManual(true)}>
-                            <Ionicons name="keypad" size={20} color={theme.accent} />
-                            <Text style={[styles.manualBtnText, { color: theme.text }]}>{t('enterBarcode')}</Text>
-                        </TouchableOpacity>
+                        <View style={{ flexDirection: 'row', gap: 10 }}>
+                            <TouchableOpacity style={[styles.manualBtn, { backgroundColor: theme.card, flex: 1 }]} onPress={() => setShowManual(true)}>
+                                <Ionicons name="keypad" size={20} color={theme.accent} />
+                                <Text style={[styles.manualBtnText, { color: theme.text }]}>{t('enterBarcode')}</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={[styles.manualBtn, { backgroundColor: theme.card, flex: 1 }]} onPress={() => handleOCRScan()}>
+                                <Ionicons name="document-text" size={20} color={theme.accent} />
+                                <Text style={[styles.manualBtnText, { color: theme.text }]}>Scan Label</Text>
+                            </TouchableOpacity>
+                        </View>
                     )}
                 </View>
             </SafeAreaView>
