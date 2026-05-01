@@ -1,10 +1,14 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
 const AuthContext = createContext();
 
-const USERS_KEY = 'trustissues_users';
 const SESSION_KEY = 'trustissues_session';
+const TOKEN_KEY = 'trustissues_token';
+
+// Use 10.0.2.2 for Android emulator, localhost for web/iOS simulator
+const API_URL = Platform.OS === 'android' ? 'http://10.0.2.2:5000/api/auth' : 'http://localhost:5000/api/auth';
 
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
@@ -14,8 +18,11 @@ export function AuthProvider({ children }) {
         // Check for existing session on app start
         (async () => {
             try {
+                const token = await AsyncStorage.getItem(TOKEN_KEY);
                 const session = await AsyncStorage.getItem(SESSION_KEY);
-                if (session) {
+                
+                if (token && session) {
+                    // Optionally: verify token with backend here
                     setUser(JSON.parse(session));
                 }
             } catch (e) {
@@ -26,60 +33,46 @@ export function AuthProvider({ children }) {
         })();
     }, []);
 
-    const getUsers = async () => {
-        try {
-            const data = await AsyncStorage.getItem(USERS_KEY);
-            return data ? JSON.parse(data) : [];
-        } catch {
-            return [];
-        }
-    };
-
     const signup = async (name, email, password) => {
-        const users = await getUsers();
+        const response = await fetch(`${API_URL}/signup`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, password })
+        });
 
-        // Check if email already exists
-        if (users.find((u) => u.email.toLowerCase() === email.toLowerCase())) {
-            throw new Error('An account with this email already exists');
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || 'Signup failed');
         }
 
-        // Validate inputs
-        if (!name.trim()) throw new Error('Name is required');
-        if (!email.trim() || !email.includes('@')) throw new Error('Valid email is required');
-        if (password.length < 6) throw new Error('Password must be at least 6 characters');
-
-        const newUser = {
-            id: Date.now().toString(),
-            name: name.trim(),
-            email: email.trim().toLowerCase(),
-            password, // In production, hash this!
-            createdAt: Date.now(),
-        };
-
-        users.push(newUser);
-        await AsyncStorage.setItem(USERS_KEY, JSON.stringify(users));
-
-        const session = { id: newUser.id, name: newUser.name, email: newUser.email };
+        const session = { id: data.user.id, name: data.user.name, email: data.user.email };
+        await AsyncStorage.setItem(TOKEN_KEY, data.token);
         await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(session));
         setUser(session);
     };
 
     const login = async (email, password) => {
-        const users = await getUsers();
-        const found = users.find(
-            (u) => u.email.toLowerCase() === email.trim().toLowerCase() && u.password === password
-        );
+        const response = await fetch(`${API_URL}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
 
-        if (!found) {
-            throw new Error('Invalid email or password');
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || 'Login failed');
         }
 
-        const session = { id: found.id, name: found.name, email: found.email };
+        const session = { id: data.user.id, name: data.user.name, email: data.user.email };
+        await AsyncStorage.setItem(TOKEN_KEY, data.token);
         await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(session));
         setUser(session);
     };
 
     const logout = async () => {
+        await AsyncStorage.removeItem(TOKEN_KEY);
         await AsyncStorage.removeItem(SESSION_KEY);
         setUser(null);
     };
