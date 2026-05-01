@@ -7,8 +7,8 @@ const AuthContext = createContext();
 const SESSION_KEY = 'trustissues_session';
 const TOKEN_KEY = 'trustissues_token';
 
-// Use 10.0.2.2 for Android emulator, localhost for web/iOS simulator
-const API_URL = Platform.OS === 'android' ? 'http://10.0.2.2:5000/api/auth' : 'http://localhost:5000/api/auth';
+// Use production Render backend URL
+const API_URL = 'https://trustissues-1.onrender.com/api/auth';
 
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
