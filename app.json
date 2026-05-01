@@ -21,7 +21,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.anonymous.TrustIssues_FoodEdition"
+      "package": "com.trustissues.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"

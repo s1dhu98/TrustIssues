@@ -8,7 +8,7 @@ const SESSION_KEY = 'trustissues_session';
 const TOKEN_KEY = 'trustissues_token';
 
 // Use production Render backend URL
-const API_URL = 'https://trustissues-1.onrender.com/api/auth';
+const API_URL = 'https://trustissues-222.onrender.com/api/auth';
 
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
