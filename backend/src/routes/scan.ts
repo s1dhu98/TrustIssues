@@ -2,10 +2,9 @@ import express, { Request, Response } from 'express';
 import { GoogleGenAI } from '@google/genai';
 const router = express.Router();
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-
 router.post('/analyze', async (req: Request, res: Response): Promise<void> => {
     try {
+        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string });
         const { ingredients, allergies } = req.body;
         
         if (!ingredients) {
@@ -37,7 +36,6 @@ Respond ONLY with a valid JSON object matching this exact schema:
             model: 'gemini-2.5-flash',
             contents: prompt,
             config: {
-                responseMimeType: "application/json",
                 tools: [{ googleSearch: {} }]
             }
         });
@@ -48,7 +46,17 @@ Respond ONLY with a valid JSON object matching this exact schema:
              return;
         }
         
-        const result = JSON.parse(text);
+        let result;
+        try {
+            // Strip markdown block if it exists
+            const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+            result = JSON.parse(cleanText);
+        } catch (parseError) {
+            console.error('Failed to parse AI response as JSON:', text);
+            res.status(500).json({ message: 'Invalid format received from AI' });
+            return;
+        }
+        
         res.json(result);
     } catch (error) {
         console.error('Scan analyze error:', error);
