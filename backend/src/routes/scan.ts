@@ -5,12 +5,14 @@ const router = express.Router();
 router.post('/analyze', async (req: Request, res: Response): Promise<void> => {
     try {
         const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string });
-        const { ingredients, allergies } = req.body;
+        const { ingredients, allergies, lang } = req.body;
         
         if (!ingredients) {
             res.status(400).json({ message: 'Ingredients are required' });
             return;
         }
+
+        const targetLanguage = lang || 'en';
 
         const prompt = `
 You are an expert nutritionist and food scientist. You have access to internet search to check unknown ingredients. 
@@ -23,6 +25,9 @@ Calculate a health score from 0 to 100 based on this.
 
 User Allergies: ${allergies && allergies.length > 0 ? allergies.join(', ') : 'None'}
 Ingredients: ${ingredients}
+
+IMPORTANT: Translate all your reasoning and ingredient names into the language code: "${targetLanguage}".
+The response MUST be written in the language corresponding to the code "${targetLanguage}".
 
 Respond ONLY with a valid JSON object matching this exact schema:
 {

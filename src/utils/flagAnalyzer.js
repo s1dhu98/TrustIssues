@@ -202,7 +202,7 @@ export function localAnalyzeIngredients(ingredientsText) {
     return { greens, reds, whites, score };
 }
 
-export async function analyzeIngredients(ingredientsText, allergies = []) {
+export async function analyzeIngredients(ingredientsText, allergies = [], lang = 'en') {
     if (!ingredientsText) return { greens: [], reds: [], whites: [], score: 50 };
 
     try {
@@ -210,7 +210,7 @@ export async function analyzeIngredients(ingredientsText, allergies = []) {
         const response = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ingredients: ingredientsText, allergies })
+            body: JSON.stringify({ ingredients: ingredientsText, allergies, lang })
         });
         
         if (!response.ok) {

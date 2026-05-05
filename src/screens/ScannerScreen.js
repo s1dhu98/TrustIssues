@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, ActivityIndicator, Platform } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, ActivityIndicator, Platform, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
@@ -14,7 +14,7 @@ import GradientButton from '../components/GradientButton';
 
 export default function ScannerScreen({ navigation }) {
     const { theme } = useTheme();
-    const { t } = useLang();
+    const { t, lang } = useLang();
     const { user } = require('../context/AuthContext').useAuth();
     const [permission, requestPermission] = useCameraPermissions();
     const [scanned, setScanned] = useState(false);
@@ -22,10 +22,25 @@ export default function ScannerScreen({ navigation }) {
     const [manualBarcode, setManualBarcode] = useState('');
     const [showManual, setShowManual] = useState(false);
 
+    const pulseAnim = useRef(new Animated.Value(1)).current;
+
     useEffect(() => {
         const unsubscribe = navigation.addListener('focus', () => setScanned(false));
         return unsubscribe;
     }, [navigation]);
+
+    useEffect(() => {
+        if (loading) {
+            Animated.loop(
+                Animated.sequence([
+                    Animated.timing(pulseAnim, { toValue: 1.3, duration: 800, useNativeDriver: true }),
+                    Animated.timing(pulseAnim, { toValue: 1, duration: 800, useNativeDriver: true })
+                ])
+            ).start();
+        } else {
+            pulseAnim.stopAnimation();
+        }
+    }, [loading]);
 
     const handleBarCodeScanned = async ({ data }) => {
         if (scanned || loading) return;
@@ -57,7 +72,7 @@ export default function ScannerScreen({ navigation }) {
                 );
                 return;
             }
-            const analysis = await analyzeIngredients(product.ingredients, user?.allergies || []);
+            const analysis = await analyzeIngredients(product.ingredients, user?.allergies || [], lang);
             const fullProduct = { ...product, ...analysis };
             await saveScan(fullProduct);
             setLoading(false);
@@ -101,7 +116,7 @@ export default function ScannerScreen({ navigation }) {
                 return;
             }
 
-            const analysis = await analyzeIngredients(text, user?.allergies || []);
+            const analysis = await analyzeIngredients(text, user?.allergies || [], lang);
             const fullProduct = {
                 barcode: baseProduct ? baseProduct.barcode : 'OCR_' + Date.now(),
                 name: baseProduct ? baseProduct.name : 'Scanned Ingredients',
@@ -175,9 +190,12 @@ export default function ScannerScreen({ navigation }) {
                     <View style={[styles.corner, styles.bottomRight, { borderColor: theme.accent }]} />
                 </View>
                 {loading && (
-                    <View style={styles.loadingBox}>
-                        <ActivityIndicator size="large" color={theme.accent} />
-                        <Text style={styles.loadingText}>{t('loading')}</Text>
+                    <View style={[StyleSheet.absoluteFill, styles.fullScreenLoading]}>
+                        <Animated.View style={[styles.pulseCircle, { transform: [{ scale: pulseAnim }], borderColor: theme.accent, backgroundColor: theme.accent + '20' }]}>
+                            <Ionicons name="sparkles" size={50} color={theme.accent} />
+                        </Animated.View>
+                        <Text style={[styles.loadingTitle, { color: theme.accent }]}>Consulting AI...</Text>
+                        <Text style={styles.loadingSubtitle}>Analyzing health flags & your allergies</Text>
                     </View>
                 )}
                 <View style={styles.bottomControls}>
@@ -227,8 +245,10 @@ const styles = StyleSheet.create({
     topRight: { top: 0, right: 0, borderLeftWidth: 0, borderBottomWidth: 0, borderTopRightRadius: 12 },
     bottomLeft: { bottom: 0, left: 0, borderRightWidth: 0, borderTopWidth: 0, borderBottomLeftRadius: 12 },
     bottomRight: { bottom: 0, right: 0, borderLeftWidth: 0, borderTopWidth: 0, borderBottomRightRadius: 12 },
-    loadingBox: { position: 'absolute', alignSelf: 'center', top: '50%', backgroundColor: 'rgba(0,0,0,0.8)', padding: 30, borderRadius: 20, alignItems: 'center' },
-    loadingText: { color: '#fff', marginTop: 12, fontWeight: '700' },
+    fullScreenLoading: { backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', zIndex: 100 },
+    pulseCircle: { width: 120, height: 120, borderRadius: 60, borderWidth: 4, justifyContent: 'center', alignItems: 'center', marginBottom: 24 },
+    loadingTitle: { color: '#fff', fontSize: 24, fontWeight: '900', marginBottom: 8 },
+    loadingSubtitle: { color: '#ddd', fontSize: 16, fontWeight: '600', textAlign: 'center', paddingHorizontal: 40 },
     bottomControls: { padding: 16 },
     manualBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 16, borderRadius: 20, gap: 8 },
     manualBtnText: { fontSize: 15, fontWeight: '700' },
