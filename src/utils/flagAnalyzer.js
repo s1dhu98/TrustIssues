@@ -97,7 +97,9 @@ const WHITE_FLAG_INGREDIENTS = {
     'baking powder': 'Common leavening agent',
 };
 
-export function analyzeIngredients(ingredientsText) {
+import { API_URL } from '../context/AuthContext';
+
+export function localAnalyzeIngredients(ingredientsText) {
     if (!ingredientsText) return { greens: [], reds: [], whites: [], score: 50 };
 
     const extractIngredientsSection = (text) => {
@@ -198,6 +200,44 @@ export function analyzeIngredients(ingredientsText) {
     score = Math.max(0, Math.min(100, score));
 
     return { greens, reds, whites, score };
+}
+
+export async function analyzeIngredients(ingredientsText, allergies = []) {
+    if (!ingredientsText) return { greens: [], reds: [], whites: [], score: 50 };
+
+    try {
+        const url = API_URL.replace('/auth', '/scan/analyze');
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ingredients: ingredientsText, allergies })
+        });
+        
+        if (!response.ok) {
+            console.error('AI Analysis failed, falling back to local analyzer');
+            const localData = localAnalyzeIngredients(ingredientsText);
+            // If they have allergies, we just forcefully inject red flags for them in fallback
+            allergies.forEach(allergy => {
+                if (ingredientsText.toLowerCase().includes(allergy.toLowerCase())) {
+                    localData.reds.push({ name: allergy, reason: 'Allergy alert: You are allergic to this.' });
+                    localData.score -= 20;
+                }
+            });
+            return localData;
+        }
+        
+        return await response.json();
+    } catch (e) {
+        console.error('Error hitting AI scan API:', e);
+        const localData = localAnalyzeIngredients(ingredientsText);
+        allergies.forEach(allergy => {
+            if (ingredientsText.toLowerCase().includes(allergy.toLowerCase())) {
+                localData.reds.push({ name: allergy, reason: 'Allergy alert: You are allergic to this.' });
+                localData.score -= 20;
+            }
+        });
+        return localData;
+    }
 }
 
 export async function fetchProduct(barcode) {

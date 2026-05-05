@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, TextInput, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
@@ -10,13 +10,46 @@ import { languageList } from '../utils/translations';
 export default function SettingsScreen() {
     const { theme, themeName, changeTheme, themes } = useTheme();
     const { lang, changeLang, t } = useLang();
-    const { user, logout } = useAuth();
+    const { user, logout, updateAllergies } = useAuth();
+    const [allergyInput, setAllergyInput] = useState('');
+    const [updatingAllergies, setUpdatingAllergies] = useState(false);
 
     const handleLogout = () => {
         Alert.alert('Logout', 'Are you sure you want to sign out?', [
             { text: 'Cancel', style: 'cancel' },
             { text: 'Sign Out', style: 'destructive', onPress: logout },
         ]);
+    };
+
+    const handleAddAllergy = async () => {
+        if (!allergyInput.trim()) return;
+        const newAllergy = allergyInput.trim();
+        const currentAllergies = user.allergies || [];
+        if (currentAllergies.map(a => a.toLowerCase()).includes(newAllergy.toLowerCase())) {
+            setAllergyInput('');
+            return;
+        }
+        setUpdatingAllergies(true);
+        try {
+            await updateAllergies([...currentAllergies, newAllergy]);
+            setAllergyInput('');
+        } catch (e) {
+            Alert.alert('Error', e.message);
+        } finally {
+            setUpdatingAllergies(false);
+        }
+    };
+
+    const handleRemoveAllergy = async (allergy) => {
+        setUpdatingAllergies(true);
+        try {
+            const currentAllergies = user.allergies || [];
+            await updateAllergies(currentAllergies.filter(a => a !== allergy));
+        } catch (e) {
+            Alert.alert('Error', e.message);
+        } finally {
+            setUpdatingAllergies(false);
+        }
     };
 
     return (
@@ -62,6 +95,42 @@ export default function SettingsScreen() {
                     </Text>
                 </View>
 
+                {/* Dietary Profile & Allergies */}
+                {user && (
+                    <View style={[styles.section, { backgroundColor: theme.card }]}>
+                        <Text style={[styles.sectionTitle, { color: theme.accent }]}>⚕️ Dietary Profile & Allergies</Text>
+                        <Text style={[styles.aboutSub, { color: theme.textSecondary, marginBottom: 12 }]}>
+                            Our AI will intelligently flag products containing these ingredients or related allergens.
+                        </Text>
+                        <View style={styles.allergyInputRow}>
+                            <TextInput
+                                style={[styles.input, { color: theme.text, borderColor: theme.border, flex: 1 }]}
+                                placeholder="E.g. Peanuts, Gluten, Red 40"
+                                placeholderTextColor={theme.textSecondary}
+                                value={allergyInput}
+                                onChangeText={setAllergyInput}
+                            />
+                            <TouchableOpacity 
+                                style={[styles.addBtn, { backgroundColor: theme.accent }]}
+                                onPress={handleAddAllergy}
+                                disabled={updatingAllergies}
+                            >
+                                {updatingAllergies ? <ActivityIndicator color="#fff" /> : <Ionicons name="add" size={24} color="#fff" />}
+                            </TouchableOpacity>
+                        </View>
+                        <View style={styles.allergiesList}>
+                            {(user.allergies || []).map((allergy, index) => (
+                                <View key={index} style={[styles.allergyTag, { backgroundColor: theme.cardAlt, borderColor: theme.border }]}>
+                                    <Text style={{ color: theme.text, fontWeight: '600' }}>{allergy}</Text>
+                                    <TouchableOpacity onPress={() => handleRemoveAllergy(allergy)} style={{ marginLeft: 8 }} disabled={updatingAllergies}>
+                                        <Ionicons name="close-circle" size={20} color={theme.red} />
+                                    </TouchableOpacity>
+                                </View>
+                            ))}
+                        </View>
+                    </View>
+                )}
+
                 {/* Account & Logout */}
                 <View style={[styles.section, { backgroundColor: theme.card }]}>
                     <Text style={[styles.sectionTitle, { color: theme.accent }]}>👤 Account</Text>
@@ -98,4 +167,9 @@ const styles = StyleSheet.create({
     aboutSub: { fontSize: 13, marginTop: 4, lineHeight: 18 },
     logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 16, borderRadius: 16, borderWidth: 2, gap: 8, marginTop: 4 },
     logoutText: { fontSize: 16, fontWeight: '800' },
+    allergyInputRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+    input: { borderWidth: 2, borderRadius: 12, padding: 12, fontSize: 15, fontWeight: '600' },
+    addBtn: { width: 50, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+    allergiesList: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    allergyTag: { flexDirection: 'row', alignItems: 'center', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 20, borderWidth: 1 },
 });

@@ -15,6 +15,7 @@ import GradientButton from '../components/GradientButton';
 export default function ScannerScreen({ navigation }) {
     const { theme } = useTheme();
     const { t } = useLang();
+    const { user } = require('../context/AuthContext').useAuth();
     const [permission, requestPermission] = useCameraPermissions();
     const [scanned, setScanned] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -56,7 +57,7 @@ export default function ScannerScreen({ navigation }) {
                 );
                 return;
             }
-            const analysis = analyzeIngredients(product.ingredients);
+            const analysis = await analyzeIngredients(product.ingredients, user?.allergies || []);
             const fullProduct = { ...product, ...analysis };
             await saveScan(fullProduct);
             setLoading(false);
@@ -100,7 +101,7 @@ export default function ScannerScreen({ navigation }) {
                 return;
             }
 
-            const analysis = analyzeIngredients(text);
+            const analysis = await analyzeIngredients(text, user?.allergies || []);
             const fullProduct = {
                 barcode: baseProduct ? baseProduct.barcode : 'OCR_' + Date.now(),
                 name: baseProduct ? baseProduct.name : 'Scanned Ingredients',

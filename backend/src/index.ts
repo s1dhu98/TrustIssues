@@ -5,6 +5,7 @@ import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import authRouter from './routes/auth.js';
+import scanRouter from './routes/scan.js';
 
 const app = express();
 
@@ -21,6 +22,7 @@ mongoose.connect(dbURI)
 
 // Routes
 app.use('/api/auth', authRouter);
+app.use('/api/scan', scanRouter);
 
 // Root endpoint
 app.get('/', (req, res) => {

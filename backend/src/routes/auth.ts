@@ -6,6 +6,7 @@ import User from '../models/User.js';
 
 // POST /api/auth/signup
 router.post('/signup', async (req: Request, res: Response): Promise<void> => {
+    console.log(`[LOCAL SERVER] POST /api/auth/signup hit with email:`, req.body?.email);
     try {
         const { name, email, password } = req.body;
 
@@ -46,12 +47,13 @@ router.post('/signup', async (req: Request, res: Response): Promise<void> => {
             user: {
                 id: savedUser._id,
                 name: savedUser.name,
-                email: savedUser.email
+                email: savedUser.email,
+                allergies: savedUser.allergies
             }
         });
-    } catch (error) {
-        console.error('Signup error:', error);
-        res.status(500).json({ message: 'Server error during signup' });
+    } catch (error: any) {
+        console.error('LOCAL SERVER Signup error:', error.message, error.stack);
+        res.status(500).json({ message: `LOCAL Server error during signup: ${error.message}` });
     }
 });
 
@@ -88,7 +90,8 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
             user: {
                 id: user._id,
                 name: user.name,
-                email: user.email
+                email: user.email,
+                allergies: user.allergies
             }
         });
     } catch (error) {
@@ -114,6 +117,39 @@ router.get('/me', async (req: Request, res: Response): Promise<void> => {
         res.json({ user });
     } catch (error) {
         res.status(401).json({ message: 'Token is not valid' });
+    }
+});
+
+// PUT /api/auth/me/allergies
+router.put('/me/allergies', async (req: Request, res: Response): Promise<void> => {
+    try {
+        const token = req.header('x-auth-token');
+        if (!token) {
+            res.status(401).json({ message: 'No token, authorization denied' });
+            return;
+        }
+        const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as any;
+        const { allergies } = req.body;
+        
+        if (!Array.isArray(allergies)) {
+            res.status(400).json({ message: 'Allergies must be an array' });
+            return;
+        }
+
+        const user = await User.findByIdAndUpdate(
+            decoded.id,
+            { allergies },
+            { new: true }
+        ).select('-password');
+
+        if (!user) {
+            res.status(404).json({ message: 'User not found' });
+            return;
+        }
+
+        res.json({ user });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error updating allergies' });
     }
 });
 

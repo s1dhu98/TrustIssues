@@ -8,7 +8,7 @@ const SESSION_KEY = 'trustissues_session';
 const TOKEN_KEY = 'trustissues_token';
 
 // Use local backend URL for testing (Replace with Render URL when deployed)
-const API_URL = process.env.NODE_ENV !== 'production' 
+export const API_URL = process.env.NODE_ENV !== 'production' 
     ? 'http://10.110.158.87:5000/api/auth' 
     : 'https://trustissues-1.onrender.com/api/auth';
 
@@ -59,7 +59,7 @@ export function AuthProvider({ children }) {
             throw new Error(data.message || 'Signup failed');
         }
 
-        const session = { id: data.user.id, name: data.user.name, email: data.user.email };
+        const session = { id: data.user.id, name: data.user.name, email: data.user.email, allergies: data.user.allergies || [] };
         await AsyncStorage.setItem(TOKEN_KEY, data.token);
         await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(session));
         setUser(session);
@@ -78,8 +78,29 @@ export function AuthProvider({ children }) {
             throw new Error(data.message || 'Login failed');
         }
 
-        const session = { id: data.user.id, name: data.user.name, email: data.user.email };
+        const session = { id: data.user.id, name: data.user.name, email: data.user.email, allergies: data.user.allergies || [] };
         await AsyncStorage.setItem(TOKEN_KEY, data.token);
+        await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(session));
+        setUser(session);
+    };
+
+    const updateAllergies = async (allergies) => {
+        const token = await AsyncStorage.getItem(TOKEN_KEY);
+        const response = await fetch(`${API_URL}/me/allergies`, {
+            method: 'PUT',
+            headers: { 
+                'Content-Type': 'application/json',
+                'x-auth-token': token
+            },
+            body: JSON.stringify({ allergies })
+        });
+        
+        const data = await safeJsonParse(response);
+        if (!response.ok) {
+            throw new Error(data.message || 'Failed to update allergies');
+        }
+
+        const session = { ...user, allergies: data.user.allergies };
         await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(session));
         setUser(session);
     };
@@ -91,7 +112,7 @@ export function AuthProvider({ children }) {
     };
 
     return (
-        <AuthContext.Provider value={{ user, loading, login, signup, logout }}>
+        <AuthContext.Provider value={{ user, loading, login, signup, logout, updateAllergies }}>
             {children}
         </AuthContext.Provider>
     );

@@ -4,6 +4,7 @@ export interface IUser extends Document {
     name: string;
     email: string;
     password?: string;
+    allergies?: string[];
     createdAt: Date;
 }
 
@@ -24,6 +25,10 @@ const UserSchema: Schema<IUser> = new mongoose.Schema({
         type: String,
         required: true,
         minlength: 6
+    },
+    allergies: {
+        type: [String],
+        default: []
     },
     createdAt: {
         type: Date,
