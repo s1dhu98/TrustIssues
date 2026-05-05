@@ -8,7 +8,7 @@ const SESSION_KEY = 'trustissues_session';
 const TOKEN_KEY = 'trustissues_token';
 
 // Use local backend URL for testing (Replace with Render URL when deployed)
-const API_URL = __DEV__ 
+const API_URL = process.env.NODE_ENV !== 'production' 
     ? 'http://10.110.158.87:5000/api/auth' 
     : 'https://trustissues-1.onrender.com/api/auth';
 
