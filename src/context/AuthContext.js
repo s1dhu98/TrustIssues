@@ -7,8 +7,10 @@ const AuthContext = createContext();
 const SESSION_KEY = 'trustissues_session';
 const TOKEN_KEY = 'trustissues_token';
 
-// Use production Render backend URL
-const API_URL = 'https://trustissues-222.onrender.com/api/auth';
+// Use local backend URL for testing (Replace with Render URL when deployed)
+const API_URL = __DEV__ 
+    ? 'http://10.110.158.87:5000/api/auth' 
+    : 'https://trustissues-1.onrender.com/api/auth';
 
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
@@ -33,6 +35,17 @@ export function AuthProvider({ children }) {
         })();
     }, []);
 
+    // Helper to safely parse JSON and catch empty responses
+    const safeJsonParse = async (response) => {
+        const text = await response.text();
+        try {
+            return text ? JSON.parse(text) : {};
+        } catch (e) {
+            console.error("Invalid JSON response:", text);
+            return { message: 'Server returned an invalid response. Is the backend running?' };
+        }
+    };
+
     const signup = async (name, email, password) => {
         const response = await fetch(`${API_URL}/signup`, {
             method: 'POST',
@@ -40,7 +53,7 @@ export function AuthProvider({ children }) {
             body: JSON.stringify({ name, email, password })
         });
 
-        const data = await response.json();
+        const data = await safeJsonParse(response);
 
         if (!response.ok) {
             throw new Error(data.message || 'Signup failed');
@@ -59,7 +72,7 @@ export function AuthProvider({ children }) {
             body: JSON.stringify({ email, password })
         });
 
-        const data = await response.json();
+        const data = await safeJsonParse(response);
 
         if (!response.ok) {
             throw new Error(data.message || 'Login failed');
