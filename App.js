@@ -11,7 +11,8 @@ import HomeScreen from './src/screens/HomeScreen';
 import ScannerScreen from './src/screens/ScannerScreen';
 import ResultScreen from './src/screens/ResultScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
-import DashboardScreen from './src/screens/DashboardScreen';
+import ExplainScreen from './src/screens/ExplainScreen';
+import HistoryScreen from './src/screens/HistoryScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import SignupScreen from './src/screens/SignupScreen';
 
@@ -38,21 +39,23 @@ function TabNavigator() {
                 },
                 tabBarActiveTintColor: theme.accent,
                 tabBarInactiveTintColor: theme.textSecondary,
-                tabBarLabelStyle: { fontSize: 11, fontWeight: '900', letterSpacing: 1 },
+                tabBarLabelStyle: { fontSize: 11, fontWeight: '900', letterSpacing: 1, textTransform: 'uppercase' },
                 tabBarIcon: ({ color, size }) => {
                     let iconName;
-                    if (route.name === 'Feed') iconName = 'newspaper';
+                    if (route.name === 'Home') iconName = 'home';
                     else if (route.name === 'Scan') iconName = 'scan-circle';
-                    else if (route.name === 'Insights') iconName = 'analytics';
-                    else if (route.name === 'Circle') iconName = 'people';
+                    else if (route.name === 'Learn') iconName = 'book';
+                    else if (route.name === 'History') iconName = 'time';
+                    else if (route.name === 'Settings') iconName = 'settings';
                     return <Ionicons name={iconName} size={size} color={color} />;
                 },
             })}
         >
-            <Tab.Screen name="Feed" component={HomeScreen} />
+            <Tab.Screen name="Home" component={HomeScreen} />
             <Tab.Screen name="Scan" component={ScannerScreen} />
-            <Tab.Screen name="Insights" component={DashboardScreen} />
-            <Tab.Screen name="Circle" component={SettingsScreen} />
+            <Tab.Screen name="Learn" component={ExplainScreen} />
+            <Tab.Screen name="History" component={HistoryScreen} />
+            <Tab.Screen name="Settings" component={SettingsScreen} />
         </Tab.Navigator>
     );
 }
