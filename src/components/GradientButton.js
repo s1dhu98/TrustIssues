@@ -14,19 +14,14 @@ export default function GradientButton({ onPress, title, icon, style }) {
 
     return (
         <TouchableOpacity onPress={handlePress} activeOpacity={0.85} style={style}>
-            <LinearGradient
-                colors={[theme.accent, theme.accentAlt]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.button}
-            >
-                <Text style={styles.text}>{icon} {title}</Text>
-            </LinearGradient>
+            <View style={[styles.button, { backgroundColor: theme.accent, borderWidth: 1, borderColor: theme.accentAlt }]}>
+                <Text style={[styles.text, { color: '#000' }]}>{icon} {title}</Text>
+            </View>
         </TouchableOpacity>
     );
 }
 
 const styles = StyleSheet.create({
-    button: { paddingVertical: 18, paddingHorizontal: 32, borderRadius: 20, alignItems: 'center' },
-    text: { color: '#fff', fontWeight: '800', fontSize: 16, letterSpacing: 0.5 },
+    button: { paddingVertical: 18, paddingHorizontal: 32, borderRadius: 0, alignItems: 'center' },
+    text: { fontWeight: '900', fontSize: 16, letterSpacing: 2, textTransform: 'uppercase' },
 });

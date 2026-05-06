@@ -27,10 +27,10 @@ export default function FlagCard({ type, items, title, onPressItem }) {
 }
 
 const styles = StyleSheet.create({
-    card: { borderRadius: 20, padding: 18, marginVertical: 8, borderLeftWidth: 6 },
-    title: { fontSize: 18, fontWeight: '800', marginBottom: 12 },
-    empty: { fontStyle: 'italic', fontSize: 14 },
-    item: { marginBottom: 10 },
-    itemName: { fontSize: 14, fontWeight: '700', marginBottom: 2 },
-    itemReason: { fontSize: 13, lineHeight: 18 },
+    card: { borderRadius: 0, padding: 18, marginVertical: 8, borderLeftWidth: 6, borderWidth: 1, borderColor: '#333' },
+    title: { fontSize: 18, fontWeight: '900', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 1 },
+    empty: { fontStyle: 'italic', fontSize: 14, fontFamily: 'monospace' },
+    item: { marginBottom: 10, paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: '#222' },
+    itemName: { fontSize: 14, fontWeight: '900', marginBottom: 4, letterSpacing: 1 },
+    itemReason: { fontSize: 13, lineHeight: 18, fontFamily: 'monospace' },
 });

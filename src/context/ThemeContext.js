@@ -2,6 +2,19 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const themes = {
+    cyber: {
+        bg: '#000000',
+        card: '#0a0a0a',
+        cardAlt: '#111111',
+        text: '#ffffff',
+        textSecondary: '#888888',
+        accent: '#ccff00',
+        accentAlt: '#00e5ff',
+        green: '#ccff00',
+        red: '#ff0055',
+        white: '#aaaaaa',
+        border: '#222222',
+    },
     dark: {
         bg: '#0d0d0d',
         card: '#1a1a2e',
@@ -59,7 +72,7 @@ const themes = {
 const ThemeContext = createContext();
 
 export function ThemeProvider({ children }) {
-    const [themeName, setThemeName] = useState('dark');
+    const [themeName, setThemeName] = useState('cyber');
 
     useEffect(() => {
         AsyncStorage.getItem('theme').then((val) => {
