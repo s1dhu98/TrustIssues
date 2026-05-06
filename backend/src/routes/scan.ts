@@ -80,9 +80,16 @@ Respond ONLY with a valid JSON object matching this exact schema:
         }
         
         res.json(result);
-    } catch (error) {
-        console.error('Scan analyze error:', error);
-        res.status(500).json({ message: 'Error analyzing ingredients via AI' });
+    } catch (error: any) {
+        console.error('Scan analyze error details:', error?.message || error);
+        
+        // Handle Gemini Quota Exceeded
+        if (error.status === 429 || (error.message && error.message.includes('429'))) {
+            res.status(429).json({ message: 'AI Quota Exceeded. You have hit your Google Gemini API daily/minute limit.' });
+            return;
+        }
+
+        res.status(500).json({ message: 'Error analyzing ingredients via AI', details: error.message });
     }
 });
 
