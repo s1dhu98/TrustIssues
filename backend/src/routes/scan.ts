@@ -33,7 +33,8 @@ Scoring Logic (0 to 100):
 - Add 5 points for every Green Flag (max 100).
 - If the product is highly processed with multiple red flags, the score should reflect a failing grade (< 40).
 
-CRITICAL LANGUAGE REQUIREMENT: Translate all your reasoning and ingredient names into the language code: "${targetLanguage}". The response MUST be written natively in "${targetLanguage}".
+CRITICAL LANGUAGE REQUIREMENT: Translate your reasoning and ingredient names into the language code: "${targetLanguage}".
+HOWEVER, DO NOT translate the JSON keys ("greens", "reds", "whites", "score", "name", "reason"). They MUST remain in English.
 
 Respond ONLY with a valid JSON object matching this exact schema:
 {
@@ -59,11 +60,21 @@ Respond ONLY with a valid JSON object matching this exact schema:
         
         let result;
         try {
-            // Strip markdown block if it exists
-            const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+            // Find the JSON object even if there is surrounding text
+            const jsonMatch = text.match(/\{[\s\S]*\}/);
+            let cleanText = text;
+            
+            if (jsonMatch) {
+                cleanText = jsonMatch[0];
+            } else {
+                // Fallback strip markdown if no clear object is found
+                cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+            }
+            
             result = JSON.parse(cleanText);
         } catch (parseError) {
             console.error('Failed to parse AI response as JSON:', text);
+            console.error('Parse error:', parseError);
             res.status(500).json({ message: 'Invalid format received from AI' });
             return;
         }
