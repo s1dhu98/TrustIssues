@@ -11,8 +11,7 @@ import HomeScreen from './src/screens/HomeScreen';
 import ScannerScreen from './src/screens/ScannerScreen';
 import ResultScreen from './src/screens/ResultScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
-import ExplainScreen from './src/screens/ExplainScreen';
-import HistoryScreen from './src/screens/HistoryScreen';
+import DashboardScreen from './src/screens/DashboardScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import SignupScreen from './src/screens/SignupScreen';
 
@@ -31,30 +30,29 @@ function TabNavigator() {
                 headerShown: false,
                 tabBarStyle: {
                     backgroundColor: theme.card,
-                    borderTopColor: 'transparent',
+                    borderTopColor: '#222',
+                    borderTopWidth: 1,
                     height: 70,
                     paddingBottom: 10,
                     paddingTop: 10,
                 },
                 tabBarActiveTintColor: theme.accent,
                 tabBarInactiveTintColor: theme.textSecondary,
-                tabBarLabelStyle: { fontSize: 11, fontWeight: '700' },
+                tabBarLabelStyle: { fontSize: 11, fontWeight: '900', letterSpacing: 1 },
                 tabBarIcon: ({ color, size }) => {
                     let iconName;
-                    if (route.name === 'Home') iconName = 'home';
+                    if (route.name === 'Feed') iconName = 'newspaper';
                     else if (route.name === 'Scan') iconName = 'scan-circle';
-                    else if (route.name === 'Learn') iconName = 'book';
-                    else if (route.name === 'History') iconName = 'time';
-                    else if (route.name === 'Settings') iconName = 'settings';
+                    else if (route.name === 'Insights') iconName = 'analytics';
+                    else if (route.name === 'Circle') iconName = 'people';
                     return <Ionicons name={iconName} size={size} color={color} />;
                 },
             })}
         >
-            <Tab.Screen name="Home" component={HomeScreen} />
+            <Tab.Screen name="Feed" component={HomeScreen} />
             <Tab.Screen name="Scan" component={ScannerScreen} />
-            <Tab.Screen name="Learn" component={ExplainScreen} />
-            <Tab.Screen name="History" component={HistoryScreen} />
-            <Tab.Screen name="Settings" component={SettingsScreen} />
+            <Tab.Screen name="Insights" component={DashboardScreen} />
+            <Tab.Screen name="Circle" component={SettingsScreen} />
         </Tab.Navigator>
     );
 }
