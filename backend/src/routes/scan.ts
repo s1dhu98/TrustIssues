@@ -15,19 +15,25 @@ router.post('/analyze', async (req: Request, res: Response): Promise<void> => {
         const targetLanguage = lang || 'en';
 
         const prompt = `
-You are an expert nutritionist and food scientist. You have access to internet search to check unknown ingredients. 
-Analyze the provided ingredients list, keeping in mind the user's specific allergies.
-Classify the ingredients into:
-- Reds (red flags): harmful additives, known carcinogens, severe allergens matching the user's list, very bad fats/sugars.
-- Greens (green flags): healthy, nutrient-rich, whole foods, beneficial ingredients.
-- Whites (white flags): neutral, common safe preservatives, typical safe additives.
-Calculate a health score from 0 to 100 based on this.
+You are a world-class toxicologist, expert nutritionist, and food scientist. Your task is to forensically analyze the following list of food ingredients.
+You MUST use your Google Search grounding to research any chemical additives, E-numbers, or unfamiliar ingredients to determine their real health impacts, including if they are banned in any countries (like the EU) or linked to severe health issues.
 
-User Allergies: ${allergies && allergies.length > 0 ? allergies.join(', ') : 'None'}
-Ingredients: ${ingredients}
+USER ALLERGIES: ${allergies && allergies.length > 0 ? allergies.join(', ') : 'None'}
+INGREDIENTS TO ANALYZE: ${ingredients}
 
-IMPORTANT: Translate all your reasoning and ingredient names into the language code: "${targetLanguage}".
-The response MUST be written in the language corresponding to the code "${targetLanguage}".
+Instructions for Classification:
+1. RED FLAGS ("reds"): Be extremely critical. Include ANY ingredient matching the User Allergies (these are critical dangers). Include artificial food dyes (Red 40, Yellow 5, etc.), artificial sweeteners (Aspartame, Sucralose), high fructose corn syrup, seed oils (canola, palm, soybean) if heavily processed, BHT/BHA, nitrates/nitrites, and any known carcinogens or endocrine disruptors. State specifically why it is bad (e.g., "Banned in EU, linked to hyperactivity").
+2. GREEN FLAGS ("greens"): Only genuinely healthy, nutrient-dense whole foods. Organic ingredients, natural vitamins, whole grains, raw nuts, natural fibers.
+3. WHITE FLAGS ("whites"): Neutral ingredients. Water, salt (if not excessive), natural spices, benign preservatives (like citric acid or ascorbic acid/Vitamin C), or common harmless thickeners (like guar gum).
+
+Scoring Logic (0 to 100):
+- Start at 100.
+- Subtract 15 points for every major allergy match (CRITICAL).
+- Subtract 10 points for every Red Flag.
+- Add 5 points for every Green Flag (max 100).
+- If the product is highly processed with multiple red flags, the score should reflect a failing grade (< 40).
+
+CRITICAL LANGUAGE REQUIREMENT: Translate all your reasoning and ingredient names into the language code: "${targetLanguage}". The response MUST be written natively in "${targetLanguage}".
 
 Respond ONLY with a valid JSON object matching this exact schema:
 {
